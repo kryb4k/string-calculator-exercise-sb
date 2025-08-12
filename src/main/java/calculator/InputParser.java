@@ -1,29 +1,38 @@
 package calculator;
 
-import java.util.regex.Matcher;
+import exceptions.CalculationException;
+
 import java.util.regex.Pattern;
 
 public class InputParser {
+    private String delimiterRegex = ",|\n";
 
-    private static final String DEFAULT_DELIMITERS = ",|\\n";
-    private static final Pattern CUSTOM_DELIMITER_PATTERN = Pattern.compile("//(.+)\\n(.*)", Pattern.DOTALL);
-
-    public Calculations parse(String input) {
-        if (input == null) throw new IllegalArgumentException("Input can't be null");
-        if (input.startsWith("//")) {
-            return parseCustomDelimiter(input);
-        }
-        return new Calculations(DEFAULT_DELIMITERS, input, input, false);
+    public String getDelimiter() {
+        return delimiterRegex;
     }
 
-    private Calculations parseCustomDelimiter(String input) {
-        Matcher matcher = CUSTOM_DELIMITER_PATTERN.matcher(input);
-        if (!matcher.matches()) {
-            throw new IllegalArgumentException("Invalid custom delimiter format.");
+    public String[] parse(String input) {
+        if (input == null || input.isEmpty()) {
+            return new String[0];
         }
-        String rawDelimiter = matcher.group(1);
-        String numbers = matcher.group(2);
-        String delimiterRegex = Pattern.quote(rawDelimiter);
-        return new Calculations(delimiterRegex, numbers, input, true);
+
+        input = input.replace("\\n", "\n");
+
+        if (input.startsWith("//")) {
+            int newlineIndex = input.indexOf('\n');
+            if (newlineIndex == -1) {
+                throw new CalculationException("Missing newline after delimiter declaration");
+            }
+            String delimiter = input.substring(2, newlineIndex);
+            if (delimiter.isEmpty()) {
+                throw new CalculationException("Delimiter cannot be empty");
+            }
+            delimiterRegex = Pattern.quote(delimiter);
+            String numbersSection = input.substring(newlineIndex + 1);
+            return numbersSection.split(delimiterRegex);
+        } else {
+            delimiterRegex = ",|\n";
+            return input.split(delimiterRegex);
+        }
     }
 }

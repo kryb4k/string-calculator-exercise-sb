@@ -1,37 +1,53 @@
 package calculator;
 
+import exceptions.CalculationException;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class InputParserTest {
 
     @Test
-    void parseDefaultDelimitersWhenNoPrefix() {
-        InputParser parser = new InputParser();
-        Calculations ctx = parser.parse("1,2\n3");
-        assertFalse(ctx.hasCustomDelimiter());
-        assertEquals(",|\\n", ctx.getDelimiterRegex());
-        assertEquals("1,2\n3", ctx.getNumberSection());
-    }
+        void parseReturnsEmptyArrayForNullInput() {
+            InputParser parser = new InputParser();
+            assertArrayEquals(new String[0], parser.parse(null));
+        }
 
-    @Test
-    void parseCustomDelimiter() {
-        InputParser parser = new InputParser();
-        Calculations ctx = parser.parse("//;\n1;2");
-        assertTrue(ctx.hasCustomDelimiter());
-        assertEquals("1;2", ctx.getNumberSection());
-        assertEquals(";", ctx.getDelimiterRegex().replaceAll("\\\\Q|\\\\E", ""), ctx.getDelimiterRegex().replaceAll("",""));
-    }
+        @Test
+        void parseReturnsEmptyArrayForEmptyString() {
+            InputParser parser = new InputParser();
+            assertArrayEquals(new String[0], parser.parse(""));
+        }
 
-    @Test
-    void invalidCustomFormatThrows() {
-        InputParser parser = new InputParser();
-        assertThrows(IllegalArgumentException.class, () -> parser.parse("//;1;2"));
-    }
+        @Test
+        void parseSplitsInputUsingDefaultDelimiters() {
+            InputParser parser = new InputParser();
+            assertArrayEquals(new String[] {"1", "2", "3"}, parser.parse("1,2\n3"));
+        }
 
-    @Test
-    void shouldThrowExceptionWhenInputIsNull() {
-        InputParser parser = new InputParser();
-        assertThrows(IllegalArgumentException.class, () -> parser.parse(null));
-    }
+        @Test
+        void parseThrowsExceptionForMissingNewlineAfterDelimiterDeclaration() {
+            InputParser parser = new InputParser();
+            CalculationException ex = assertThrows(CalculationException.class, () -> parser.parse("//;1;2"));
+            assertEquals("Missing newline after delimiter declaration", ex.getMessage());
+        }
+
+        @Test
+        void parseThrowsExceptionForEmptyCustomDelimiter() {
+            InputParser parser = new InputParser();
+            CalculationException ex = assertThrows(CalculationException.class, () -> parser.parse("//\n1;2"));
+            assertEquals("Delimiter cannot be empty", ex.getMessage());
+        }
+
+        @Test
+        void parseSplitsInputUsingCustomDelimiter() {
+            InputParser parser = new InputParser();
+            assertArrayEquals(new String[] {"1", "2", "3"}, parser.parse("//;\n1;2;3"));
+        }
+
+        @Test
+        void parseResetsToDefaultDelimitersForStandardInput() {
+            InputParser parser = new InputParser();
+            parser.parse("//;\n1;2;3");
+            assertArrayEquals(new String[] {"4", "5", "6"}, parser.parse("4,5\n6"));
+        }
 }
