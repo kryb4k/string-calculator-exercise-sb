@@ -1,15 +1,20 @@
 package calculator;
 
+import exceptions.CalculationException;
+
 public class CalculationsService {
     public int sumStrings(String[] tokens) {
         int sum = 0;
         for (String token : tokens) {
-            if (token == null || token.isBlank()) {
-                throw new IllegalArgumentException("Token cannot be null or empty");
+            if (token.isEmpty()) continue;
+            int num;
+            try {
+                num = Integer.parseInt(token);
+            } catch (NumberFormatException e) {
+                throw new CalculationException("Invalid number: " + token);
             }
-            int value = Integer.parseInt(token.trim());
-            if (value <= 1000) {
-                sum += value;
+            if (num <= 1000) {
+                sum += num;
             }
         }
         return sum;
